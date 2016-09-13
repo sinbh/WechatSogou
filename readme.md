@@ -4,25 +4,31 @@
 
 # 项目简介
 基于搜狗微信搜索的微信公众号爬虫接口，可以扩展成基于搜狗搜索的爬虫
-基于Python3，但是2应该也可以使用
+
+基于Python3
+
+如果有问题，请提issue
+
 > 关于我，欢迎关注
   微博：[Chyroc](http://weibo.com/cyp1105)
-  邮箱：chyroc@qq.com
 ---
 
 # 项目使用
 
+参见[test.py](https://github.com/Chyroc/WechatSogou/blob/master/test.py)
+
 ## 引用
 
-    from wechatsogou import WechatSpider
-    wechats = WechatSpider()
-    wechats.get_session()
+    from wechatsogou import *
+    wechats = WechatSogouApi()
 
 ## 搜索公众号 - search_gzh_info
 
-    infos = wechats.search_gzh_info(name, page)
-    for info in infos:
-        name = info['name']
+    name = '南京航空航天大学'
+    wechat_infos = wechats.search_gzh_info(name)
+
+<img src="https://raw.githubusercontent.com/chyroc/wechatsogou/master/screenshot/search_gzh_info.png" />
+
 返回结果是列表，每一项均是公众号具体信息字典，具体如下
 
 字段|含义
@@ -36,107 +42,120 @@ img|头像地址
 url|最近文章地址
 
 ## 获取公众号
-对于一个已知`wechatid`的公众号，如果需要获取其最近文章，可以通过以下方式先获取具体信息（包括最近文章地址），然后根据``获取
+对于一个已知`wechatid`的公众号
 
-    detail = wechats.get_gzh_info(wechatid）
-    url = detail['url']
-返回结果与上述search_gzh_info函数返回结果一致
+    wechat_id = 'nanhangqinggong'
+    wechat_info = wechats.get_gzh_info(wechat_id)
 
-## 获取最近文章列表字典 - get_gzh_article_dict
+<img src="https://raw.githubusercontent.com/chyroc/wechatsogou/master/screenshot/get_gzh_info.png" />
 
-    article_list_infos = wechats.get_gzh_article_dict(url)
-article_list_infos是字典{info:{img:'',name:'',wechatid:'',jieshao:'',zhuti:''},msgdict:''}
-
-字段|含义
----|---
-info|公众号信息
-info->img|头像
-info->name|名称
-info->wechatid|id
-info->jieshao|介绍
-info->zhuti|主体
-msgdict|具体文章信息列表
+返回结果与上述search_gzh_info返回结果一致
 
 
-    infos = article_list_infos['msgdict']['list']
-    for info in infos:
-        comm_msg_info = info['comm_msg_info']
-        app_msg_ext_info = info['app_msg_ext_info']
+## 搜索微信文章
 
-comm_msg_info是字典
+    keywords = '傅里叶变换'
+    wechat_articles = wechats.search_article_info(keywords)
+
+<img src="https://raw.githubusercontent.com/chyroc/wechatsogou/master/screenshot/search_article_info.png" />
+
+返回结果是列表，每一项均是文章信息字典，具体如下
 
 字段|含义
 ---|---
-status|...
-fakeid|...
-datetime|...
-type|...
-id|...
-content|...
+name|文章标题
+url|文章链接
+img|文章封面图片缩略图，可转为高清大图
+zhaiyao|文章摘要
+time|文章推送时间，10位时间戳
+gzhname|公众号名称
+gzhqrcodes|公众号二维码
+gzhurl|公众号最近文章地址
 
-app_msg_ext_info也是字典
+## 获取最近文章 详情页 字典 - get_gzh_recent_info
+
+    wechat_id = 'nanhangqinggong'
+    wechat_info = wechats.get_gzh_info(wechat_id)
+    data = wechats.get_gzh_recent_info(wechat_info['url'])
+
+<img src="https://raw.githubusercontent.com/chyroc/wechatsogou/master/screenshot/get_gzh_article_and_gzh_by_url_dict.png" />
+
 
 字段|含义
 ---|---
-subtype|...
-title|标题
-copyright_stat|文章类型（100为普通，11原创，101转载）
-author|作者
-source_url|原文地址
-fileid|...
-content|...
+gzh_info|公众号信息字典
+articles|最近文章列表，每一项均是字典
+
+其中`gzh_info`的具体如下
+
+字段|含义
+---|---
+name|公众号名称
+wechatid|公众号id
+jieshao|介绍
+renzhen|认证，为空表示未认证
+qrcode|二维码
+img|头像图片
+url|最近文章地址
+
+`articles`的每一项具体如下
+
+字段|含义
+---|---
+main|是否是一次推送中第一篇文章，1则是
+title|文章标题
+digest|摘要
+content|
+fileid|
 content_url|文章地址
-cover|封面图片地址
-digest|描述
-is_multi|是否多图文（1位多图文，有multi_app_msg_item_list字段，0为单图文）
-multi_app_msg_item_list|多图文
-
-## 获取最近文章列表 - get_gzh_article_detail
-
-    article_list_infos = wechats.get_gzh_article_dict(url)
-    item = wechats.get_gzh_article_detail(article_list_infos['msgdict'])
-item是列表，每一项均是具体信息字典
-
-字段|含义
----|---
-title|标题
-digest|描述
-cover|封面图片地址
-main|是否为一次推送中第一篇文章
-content_url|文章地址
-author|作者
-copyright_stat|文章类型（100为普通，11原创，101转载,12?）
 source_url|原文地址
-fileid|...
-content|...
+cover|封面图片
+author|作者
+copyright_stat|文章内容版权性
 
-## 获取文章具体信息 - get_gzh_article_info
 
-    infos = wechats.get_gzh_info('newsbro')
-    articledict = wechats.get_gzh_article_dict(infos['url'])
-    articles = wechats.get_gzh_article_detail(articledict)
-    for article in articles:
-        article_info = wechats.get_gzh_article_info(article)
+## 通过微信号获取上一步数据 - get_gzh_article_by_wechatid_dict
 
-article_info是文章页具体信息字典
+    wechat_id = 'nanhangqinggong'
+    articles_by_wechatid = wechats.get_gzh_article_by_wechatid_dict(wechat_id)
+
+返回结果与上一步一样
+
+
+## 处理文章 - get_gzh_article_info
+
+一般需要处理，因为需要在这一步获取固定的而不是临时的文章链接
+
+    wechat_id = 'nanhangqinggong'
+    wechat_info = wechats.get_gzh_info(wechat_id)
+    articles = wechats.get_gzh_article_by_url_dict(wechat_info['url'])
+    article_info = wechats.get_gzh_article_info(articles[0])
+
+<img src="https://raw.githubusercontent.com/chyroc/wechatsogou/master/screenshot/get_gzh_article_info.png" />
+
+返回字典，具体如下
 
 字段|含义
 ---|---
-yuan|文章的固定地址（通过搜索获取的文章地址有时效性？）
-content|文章内容，字典，一下三项均含img和br标签
-content->content_html|原始文章内容，包括html标签及样式
-content->content_rich|包含图片（包括图片应展示的样式）的文章内容
-content->content_text|包含图片（`<img src="..." />`格式）的文章内容
-comment|评论以及阅读量，字典
-comment->base_resp|返回码，字典，包含下面两项
-comment->base_resp->ret|返回码
-comment->base_resp->errmsg|返回错误信息
-comment->read_num|阅读量
-comment->like_num|点赞数
-comment->elected_comment_total_cnt|评论数
-comment->comment|具体评论数据，每一项均是一个列表，设为comment_comment
+yuan|文章固定地址
+related|相似文章信息字典
+comment|评论信息字典
+content|文章内容
 
-comment_comment是一项评论
+
+`comment`是评论以及阅读量，字典
+
+字段|含义
+---|---
+base_resp|返回码，字典，包含下面两项
+base_resp->ret|返回码
+base_resp->errmsg|返回错误信息
+read_num|阅读量
+like_num|点赞数
+elected_comment_total_cnt|评论数
+comment|具体评论数据，每一项均是一个列表，设为comment_comment
+
+`comment_comment`是一项评论
 
 字段|含义
 ---|---
@@ -147,20 +166,39 @@ logo_url|评论者头像
 reply|回复
 其余字典未说明，请打印自行查看|
 
+`content`是文章内容，字典，一下三项均含`img`和`br`标签
+
+字段|含义
+---|---
+content_html|原始文章内容，包括html标签及样式
+content_rich|包含图片（包括图片应展示的样式）的文章内容
+content_text|包含图片（`<img src="..." />`格式）的文章内容
+
 ## 获取首页推荐文章公众号最近文章地址 - get_recent_article_url_by_index_single
 
-    wechats = WechatSpider()
-    urls = wechats.get_recent_article_url_by_index_single(2,10) #单页
-    # urls = wechats.get_recent_article_url_by_index_all() #首页全部
-    dict = wechats.get_gzh_article_dict(url[0])
+    articles_single = wechats.get_recent_article_url_by_index_single()
 
-    url是最近文章字典
+<img src="https://raw.githubusercontent.com/chyroc/wechatsogou/master/screenshot/get_recent_article_url_by_index_single.png" />
+
+返回的是列表，每一项是不同公众号的的最近文章页
+
+## 获取首页推荐文章公众号最近文章地址  所有分类 - get_recent_article_url_by_index_all
+
+    articles_all = wechats.get_recent_article_url_by_index_all()
+
+<img src="https://raw.githubusercontent.com/chyroc/wechatsogou/master/screenshot/get_recent_article_url_by_index_all.png" />
+
+
+返回的是列表，每一项是不同公众号的的最近文章页
 
 ---
 
 # TODO
-- [ ] 相似文章的公众号获取
+- [x] 相似文章的公众号获取
 - [x] 主页热门公众号获取
 - [x] 文章详情页信息
+- [ ] 验证码识别
+- [ ] 接入爬虫框架
+- [ ] 兼容py2
 
 ---
